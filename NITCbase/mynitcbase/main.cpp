@@ -9,36 +9,44 @@
 using namespace std;
 
 int main(int argc, char *argv[]) {
-  /* Initialize the Run Copy of Disk */
   Disk disk_run;
 
-  // StaticBuffer buffer;
-  // OpenRelTable cache;
+  // create objects for the relation catalog and attribute catalog
+  RecBuffer relCatBuffer(RELCAT_BLOCK);
+  RecBuffer attrCatBuffer(ATTRCAT_BLOCK);
 
-  //write
-  unsigned char buffer[BLOCK_SIZE];
-  Disk::readBlock(buffer,7000);
-  char message[] = "hello";
-  memcpy(buffer+20, message, 6);
-  Disk::writeBlock(buffer, 7000);
+  HeadInfo relCatHeader;
+  HeadInfo attrCatHeader;
 
-  //read
-  unsigned char buffer2[BLOCK_SIZE];
-  char message2[6];
-  Disk::readBlock(buffer2, 7000);
-  memcpy(message2, buffer2+20, 6);
-  cout << message2 << '\n';
+  // load the headers of both the blocks into relCatHeader and attrCatHeader.
+  // (we will implement these functions later)
+  relCatBuffer.getHeader(&relCatHeader);
+  attrCatBuffer.getHeader(&attrCatHeader);
 
-  //read the first block
+  int totalrel = relCatHeader.numEntries;
 
-  unsigned char buffer3[BLOCK_SIZE];
-  Disk::readBlock(buffer3, 0);
-  for(int i=0; i<6; i++){
-    cout << (int)buffer3[i] << " ";
+  for (int i=0; i<totalrel ; i++) {
+
+    Attribute relCatRecord[RELCAT_NO_ATTRS]; // will store the record from the relation catalog
+
+    relCatBuffer.getRecord(relCatRecord, i);
+
+    printf("Relation: %s\n", relCatRecord[RELCAT_REL_NAME_INDEX].sVal);
+
+    int totalattr = attrCatHeader.numEntries;
+    for (int j=0; j<totalattr ; j++) {
+
+      Attribute attrCatRecord[ATTRCAT_NO_ATTRS];
+      attrCatBuffer.getRecord(attrCatRecord, j);
+      // declare attrCatRecord and load the attribute catalog entry into it
+
+      if (strcmp(attrCatRecord[ATTRCAT_REL_NAME_INDEX].sVal, relCatRecord[RELCAT_REL_NAME_INDEX].sVal) == 0) {
+        const char *attrType = attrCatRecord[ATTRCAT_ATTR_TYPE_INDEX].nVal == NUMBER ? "NUM" : "STR";
+        printf("  %s: %s\n",  attrCatRecord[ATTRCAT_ATTR_NAME_INDEX].sVal, attrType);
+      }
+    }
+    printf("\n");
   }
-  cout << "\n";
 
   return 0;
-
-  //return FrontendInterface::handleFrontend(argc, argv);
 }
