@@ -13,15 +13,12 @@ int main(int argc, char *argv[]) {
 
   // create objects for the relation catalog and attribute catalog
   RecBuffer relCatBuffer(RELCAT_BLOCK);
-  RecBuffer attrCatBuffer(ATTRCAT_BLOCK);
 
   HeadInfo relCatHeader;
-  HeadInfo attrCatHeader;
 
   // load the headers of both the blocks into relCatHeader and attrCatHeader.
   // (we will implement these functions later)
   relCatBuffer.getHeader(&relCatHeader);
-  attrCatBuffer.getHeader(&attrCatHeader);
 
   int totalrel = relCatHeader.numEntries;
 
@@ -33,17 +30,30 @@ int main(int argc, char *argv[]) {
 
     printf("Relation: %s\n", relCatRecord[RELCAT_REL_NAME_INDEX].sVal);
 
-    int totalattr = attrCatHeader.numEntries;
-    for (int j=0; j<totalattr ; j++) {
+    int attrBlock = ATTRCAT_BLOCK;
 
-      Attribute attrCatRecord[ATTRCAT_NO_ATTRS];
-      attrCatBuffer.getRecord(attrCatRecord, j);
-      // declare attrCatRecord and load the attribute catalog entry into it
+    while(attrBlock != -1){
 
-      if (strcmp(attrCatRecord[ATTRCAT_REL_NAME_INDEX].sVal, relCatRecord[RELCAT_REL_NAME_INDEX].sVal) == 0) {
-        const char *attrType = attrCatRecord[ATTRCAT_ATTR_TYPE_INDEX].nVal == NUMBER ? "NUM" : "STR";
-        printf("  %s: %s\n",  attrCatRecord[ATTRCAT_ATTR_NAME_INDEX].sVal, attrType);
+      RecBuffer attrcatBuffer(attrBlock);
+      HeadInfo attrCatHeader;
+      attrcatBuffer.getHeader(&attrCatHeader);
+
+
+      int totalattr = attrCatHeader.numEntries;
+      for (int j=0; j<totalattr ; j++) {
+
+        Attribute attrCatRecord[ATTRCAT_NO_ATTRS];
+        attrcatBuffer.getRecord(attrCatRecord, j);
+        // declare attrCatRecord and load the attribute catalog entry into it
+
+        if (strcmp(attrCatRecord[ATTRCAT_REL_NAME_INDEX].sVal, relCatRecord[RELCAT_REL_NAME_INDEX].sVal) == 0) {
+          const char *attrType = attrCatRecord[ATTRCAT_ATTR_TYPE_INDEX].nVal == NUMBER ? "NUM" : "STR";
+          printf("  %s: %s\n",  attrCatRecord[ATTRCAT_ATTR_NAME_INDEX].sVal, attrType);
+        }
       }
+      
+      attrBlock = attrCatHeader.rblock;
+
     }
     printf("\n");
   }
