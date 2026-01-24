@@ -7,7 +7,7 @@ AttrCacheEntry* AttrCacheTable::attrCache[MAX_OPEN];
 /* returns the attrOffset-th attribute for the relation corresponding to relId
 NOTE: this function expects the caller to allocate memory for `*attrCatBuf`
 */
-int AttrCacheTable::getAttrCatEntry(int relId, int attrOffset, AttrCatEntry* attrCatBuf) {
+int AttrCacheTable::getAttrCatEntry(int relId, char attrName[ATTR_SIZE], AttrCatEntry* attrCatBuf) {
   // check if 0 <= relId < MAX_OPEN and return E_OUTOFBOUND otherwise
   if(relId < 0 || relId >= MAX_OPEN){
     return E_OUTOFBOUND;
@@ -20,7 +20,7 @@ int AttrCacheTable::getAttrCatEntry(int relId, int attrOffset, AttrCatEntry* att
 
   // traverse the linked list of attribute cache entries
   for (AttrCacheEntry* entry = attrCache[relId]; entry != nullptr; entry = entry->next) {
-    if (entry->attrCatEntry.offset == attrOffset) {
+    if (strcmp(entry->attrCatEntry.attrName, attrName) == 0) {
 
       // copy entry->attrCatEntry to *attrCatBuf and return SUCCESS;
       *attrCatBuf = entry->attrCatEntry;

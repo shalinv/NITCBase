@@ -9,18 +9,5 @@ int main(int argc, char *argv[]) {
   StaticBuffer buffer;
   OpenRelTable cache;
 
-  for(int i=0; i<=1; i++){
-    RelCatEntry RelCatBuffer;
-    RelCacheTable::getRelCatEntry(i, &RelCatBuffer);
-    printf("Relation: %s\n", RelCatBuffer.relName);
-
-    for(int j=0 ; j < RelCatBuffer.numAttrs; j++){
-      AttrCatEntry AttrCatBuffer;
-      AttrCacheTable::getAttrCatEntry(i, j, &AttrCatBuffer);
-      printf(" %s: %s\n", AttrCatBuffer.attrName, (AttrCatBuffer.attrType) ? "STR" : "NUM");
-    }
-    printf("\n");
-  }
-
-  return 0;
+  return FrontendInterface::handleFrontend(argc, argv);
 }
