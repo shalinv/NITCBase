@@ -138,3 +138,16 @@ OpenRelTable::~OpenRelTable() {
     AttrCacheTable::attrCache[i] = nullptr;
   }
 }
+
+/* This function will open a relation having name `relName`.
+Since we are currently only working with the relation and attribute catalog, we
+will just hardcode it. In subsequent stages, we will loop through all the relations
+and open the appropriate one.
+*/
+int OpenRelTable::getRelId(char relName[ATTR_SIZE]) {
+
+  if(strcmp(RELCAT_RELNAME, relName) == 0) return RELCAT_RELID;
+  if(strcmp(ATTRCAT_RELNAME, relName) == 0) return ATTRCAT_RELID;
+
+  return E_RELNOTOPEN;
+}

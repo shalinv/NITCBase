@@ -31,7 +31,8 @@ RecId BlockAccess::linearSearch(int relId, char attrName[ATTR_SIZE], union Attri
     {
         // (there is a hit from previous search; search should start from
         // the record next to the search index record)
-
+        block = prevRecId.block;
+        slot = prevRecId.slot + 1;
         // block = search index's block
         // slot = search index's slot + 1
     }
@@ -46,22 +47,36 @@ RecId BlockAccess::linearSearch(int relId, char attrName[ATTR_SIZE], union Attri
         /* create a RecBuffer object for block (use RecBuffer Constructor for
            existing block) */
 
+        RecBuffer recBuf(block);
+
         // get the record with id (block, slot) using RecBuffer::getRecord()
         // get header of the block using RecBuffer::getHeader() function
         // get slot map of the block using RecBuffer::getSlotMap() function
 
-        // If slot >= the number of slots per block(i.e. no more slots in this block)
+        HeadInfo head;
+        recBuf.getHeader(&head);
+
+        unsigned char slotMap[head.numSlots];
+        recBuf.getSlotMap(slotMap);
+
+        if(slot >= head.numSlots)
         {
-            // update block = right block of block
-            // update slot = 0
+            block = head.rblock;
+            slot = 0;
+
             continue;  // continue to the beginning of this while loop
         }
 
         // if slot is free skip the loop
-        // (i.e. check if slot'th entry in slot map of block contains SLOT_UNOCCUPIED)
+        if(slotMap[slot] == SLOT_UNOCCUPIED)
         {
-            // increment slot and continue to the next record slot
+            slot++;
+            continue;
         }
+
+        //get record
+        Attribute record[head.numAttrs];
+        recBuf.getRecord(record, slot);
 
         // compare record's attribute value to the the given attrVal as below:
         /*
@@ -69,10 +84,13 @@ RecId BlockAccess::linearSearch(int relId, char attrName[ATTR_SIZE], union Attri
             from the attribute cache entry of the relation using
             AttrCacheTable::getAttrCatEntry()
         */
+       AttrCatEntry attrCatEntry;
+       AttrCacheTable::getAttrCatEntry(relId,attrName,&attrCatEntry);
+       int offset = attrCatEntry.offset;
         /* use the attribute offset to get the value of the attribute from
            current record */
 
-        int cmpVal;  // will store the difference between the attributes
+        int cmpVal = compareAttrs(record[offset], attrVal, attrCatEntry.attrType);  // will store the difference between the attributes
         // set cmpVal using compareAttrs()
 
         /* Next task is to check whether this record satisfies the given condition.
@@ -93,7 +111,11 @@ RecId BlockAccess::linearSearch(int relId, char attrName[ATTR_SIZE], union Attri
             the record id of the record that satisfies the given condition
             (use RelCacheTable::setSearchIndex function)
             */
+            RecId foundRecId;
+            foundRecId.block = block;
+            foundRecId.slot  = slot;
 
+            RelCacheTable::setSearchIndex(relId, &foundRecId);
             return RecId{block, slot};
         }
 
