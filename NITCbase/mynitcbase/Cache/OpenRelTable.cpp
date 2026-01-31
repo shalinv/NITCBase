@@ -48,6 +48,22 @@ OpenRelTable::OpenRelTable() {
   *(RelCacheTable::relCache[ATTRCAT_RELID]) = relCacheAttrEntry;
 
 
+  /*----students------*/
+  Attribute StdRelRecord[RELCAT_NO_ATTRS];
+  relCatBlock.getRecord(StdRelRecord,2);
+
+  RelCacheEntry relCacheStdEntry;
+  RelCacheTable::recordToRelCatEntry(StdRelRecord, &relCacheStdEntry.relCatEntry);
+  relCacheStdEntry.recId.block = RELCAT_BLOCK;
+  relCacheStdEntry.recId.slot = 2;
+
+  relCacheStdEntry.searchIndex.block = -1;
+  relCacheStdEntry.searchIndex.slot = -1;
+
+  RelCacheTable::relCache[2] = (RelCacheEntry*)malloc(sizeof(RelCacheEntry));
+  *(RelCacheTable::relCache[2]) = relCacheStdEntry;
+
+
   /************ Setting up Attribute cache entries ************/
   // (we need to populate attribute cache with entries for the relation catalog
   //  and attribute catalog.)
@@ -116,6 +132,30 @@ OpenRelTable::OpenRelTable() {
   }
 
   AttrCacheTable::attrCache[ATTRCAT_RELID] = attrHead;
+
+  /*--students---*/
+  AttrCacheEntry *StdHead = nullptr;
+  AttrCacheEntry *StdCurr = nullptr;
+
+  for(int slot = 12; slot <= 15; slot++){
+    attrCatBlock.getRecord(attrCatRecord, slot);
+
+    AttrCacheEntry *node = (AttrCacheEntry*)malloc(sizeof(AttrCacheEntry));
+    AttrCacheTable::recordToAttrCatEntry(attrCatRecord, &node->attrCatEntry);
+
+    node->recId.block = ATTRCAT_BLOCK;
+    node->recId.slot = slot;
+    node->next = nullptr;
+
+    if(StdHead == nullptr){
+      StdHead = StdCurr = node;
+    }else{
+      StdCurr->next = node;
+      StdCurr = node;
+    }
+  }
+
+  AttrCacheTable::attrCache[2] = StdHead;
 }
 
 
@@ -148,6 +188,6 @@ int OpenRelTable::getRelId(char relName[ATTR_SIZE]) {
 
   if(strcmp(RELCAT_RELNAME, relName) == 0) return RELCAT_RELID;
   if(strcmp(ATTRCAT_RELNAME, relName) == 0) return ATTRCAT_RELID;
-
-  return E_RELNOTOPEN;
+  if(strcmp("Students", relName) == 0) return 2;
+  else return E_RELNOTOPEN;
 }
