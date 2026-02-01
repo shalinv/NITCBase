@@ -2,13 +2,17 @@
 #include <cstdlib>
 #include <cstring>
 
+OpenRelTableMetaInfo OpenRelTable::tableMetaInfo[MAX_OPEN];
+
 OpenRelTable::OpenRelTable() {
 
   // initialize relCache and attrCache with nullptr
   for (int i = 0; i < MAX_OPEN; ++i) {
     RelCacheTable::relCache[i] = nullptr;
     AttrCacheTable::attrCache[i] = nullptr;
+    tableMetaInfo[i].free = true;
   }
+
 
   /************ Setting up Relation Cache entries ************/
   // (we need to populate relation cache with entries for the relation catalog
@@ -46,22 +50,6 @@ OpenRelTable::OpenRelTable() {
 
   RelCacheTable::relCache[ATTRCAT_RELID] = (RelCacheEntry*)malloc(sizeof(RelCacheEntry));
   *(RelCacheTable::relCache[ATTRCAT_RELID]) = relCacheAttrEntry;
-
-
-  /*----students------*/
-  Attribute StdRelRecord[RELCAT_NO_ATTRS];
-  relCatBlock.getRecord(StdRelRecord,2);
-
-  RelCacheEntry relCacheStdEntry;
-  RelCacheTable::recordToRelCatEntry(StdRelRecord, &relCacheStdEntry.relCatEntry);
-  relCacheStdEntry.recId.block = RELCAT_BLOCK;
-  relCacheStdEntry.recId.slot = 2;
-
-  relCacheStdEntry.searchIndex.block = -1;
-  relCacheStdEntry.searchIndex.slot = -1;
-
-  RelCacheTable::relCache[2] = (RelCacheEntry*)malloc(sizeof(RelCacheEntry));
-  *(RelCacheTable::relCache[2]) = relCacheStdEntry;
 
 
   /************ Setting up Attribute cache entries ************/
@@ -133,42 +121,48 @@ OpenRelTable::OpenRelTable() {
 
   AttrCacheTable::attrCache[ATTRCAT_RELID] = attrHead;
 
-  /*--students---*/
-  AttrCacheEntry *StdHead = nullptr;
-  AttrCacheEntry *StdCurr = nullptr;
 
-  for(int slot = 12; slot <= 15; slot++){
-    attrCatBlock.getRecord(attrCatRecord, slot);
+  tableMetaInfo[RELCAT_RELID].free = false;
+  strcpy(tableMetaInfo[RELCAT_RELID].relName , RELCAT_RELNAME);
 
-    AttrCacheEntry *node = (AttrCacheEntry*)malloc(sizeof(AttrCacheEntry));
-    AttrCacheTable::recordToAttrCatEntry(attrCatRecord, &node->attrCatEntry);
+  tableMetaInfo[ATTRCAT_RELID].free = false;
+  strcpy(tableMetaInfo[ATTRCAT_RELID].relName , ATTRCAT_RELNAME);
+  
+}
 
-    node->recId.block = ATTRCAT_BLOCK;
-    node->recId.slot = slot;
-    node->next = nullptr;
+int OpenRelTable::getFreeOpenRelTableEntry() {
 
-    if(StdHead == nullptr){
-      StdHead = StdCurr = node;
-    }else{
-      StdCurr->next = node;
-      StdCurr = node;
+  /* traverse through the tableMetaInfo array,
+    find a free entry in the Open Relation Table.*/
+  for(int i=0; i<MAX_OPEN ; i++){
+    if(tableMetaInfo[i].free == true){
+      return i;
     }
   }
 
-  AttrCacheTable::attrCache[2] = StdHead;
+  // if found return the relation id, else return E_CACHEFULL.
+  return E_CACHEFULL;
 }
 
 
 OpenRelTable::~OpenRelTable() {
+
+  // close all open relations (from rel-id = 2 onwards. Why?)
+  for (int i = 2; i < MAX_OPEN; ++i) {
+    if (!tableMetaInfo[i].free) {
+      OpenRelTable::closeRel(i); // we will implement this function later
+    }
+  }
+
   // free all the memory that you allocated in the constructor
-  for(int i=0; i < MAX_OPEN; i++){
+  for(int i=0; i < 2; i++){
     if(RelCacheTable::relCache[i] != nullptr){
       free(RelCacheTable::relCache[i]);
       RelCacheTable::relCache[i] = nullptr;
     }
   }
 
-  for(int i=0; i < MAX_OPEN; i++){
+  for(int i=0; i < 2; i++){
     AttrCacheEntry *curr = AttrCacheTable::attrCache[i];
     while(curr != nullptr){
       AttrCacheEntry *next = curr->next;
