@@ -7,10 +7,13 @@ struct BufferMetaInfo StaticBuffer::metainfo[BUFFER_CAPACITY];
 
 StaticBuffer::StaticBuffer() {
 
-  // initialise all blocks as free
   for (int bufferIndex = 0; bufferIndex < BUFFER_CAPACITY ; bufferIndex++) {
     metainfo[bufferIndex].free = true;
+    metainfo[bufferIndex].dirty = false;
+    metainfo[bufferIndex].timeStamp = -1;
+    metainfo[bufferIndex].blockNum = -1;
   }
+
 }
 
 /*
@@ -18,7 +21,13 @@ At this stage, we are not writing back from the buffer to the disk since we are
 not modifying the buffer. So, we will define an empty destructor for now. In
 subsequent stages, we will implement the write-back functionality here.
 */
-StaticBuffer::~StaticBuffer() {}
+StaticBuffer::~StaticBuffer() {
+  for (int bufferIndex = 0; bufferIndex < BUFFER_CAPACITY ; bufferIndex++) {
+    if(metainfo[bufferIndex].free == false && metainfo[bufferIndex].dirty == true){
+      Disk::writeBlock(blocks[bufferIndex], metainfo[bufferIndex].blockNum);
+    }
+  }
+}
 
 int StaticBuffer::getFreeBuffer(int blockNum) {
   if (blockNum < 0 || blockNum >= DISK_BLOCKS) {
