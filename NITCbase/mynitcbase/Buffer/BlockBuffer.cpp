@@ -191,3 +191,67 @@ int RecBuffer::setRecord(union Attribute *rec, int slotNum) {
 
     return SUCCESS;
 }
+
+int BlockBuffer::setHeader(struct HeadInfo *head){
+
+    unsigned char *bufferPtr;
+    // get the starting address of the buffer containing the block using
+    // loadBlockAndGetBufferPtr(&bufferPtr).
+    // if loadBlockAndGetBufferPtr(&bufferPtr) != SUCCESS
+        // return the value returned by the call.
+    int ret = loadBlockAndGetBufferPtr(&bufferPtr);
+    if(ret != SUCCESS){
+        return ret;
+    }
+
+    // cast bufferPtr to type HeadInfo*
+    struct HeadInfo *bufferHeader = (struct HeadInfo *)bufferPtr;
+
+    // copy the fields of the HeadInfo pointed to by head (except reserved) to
+    // the header of the block (pointed to by bufferHeader)
+    //(hint: bufferHeader->numSlots = head->numSlots )
+    bufferHeader->numSlots = head->numSlots;
+    bufferHeader->numAttrs = head->numAttrs;
+    bufferHeader->numEntries  = head->numEntries;
+    bufferHeader->lblock  = head->lblock;
+    bufferHeader->rblock  = head->rblock;
+    bufferHeader->pblock  = head->pblock;
+    bufferHeader->blockType = head->blockType;
+
+    // update dirty bit by calling StaticBuffer::setDirtyBit()
+    // if setDirtyBit() failed, return the error code
+    ret = StaticBuffer::setDirtyBit(blockNum);
+    if(ret != SUCCESS){
+        return ret;
+    }
+
+    return SUCCESS;
+}
+
+int BlockBuffer::setBlockType(int blockType){
+
+    unsigned char *bufferPtr;
+    /* get the starting address of the buffer containing the block
+       using loadBlockAndGetBufferPtr(&bufferPtr). */
+
+    int ret = loadBlockAndGetBufferPtr(&bufferPtr);
+    if(ret != SUCCESS){
+        return ret;
+    }
+
+    // store the input block type in the first 4 bytes of the buffer.
+    // (hint: cast bufferPtr to int32_t* and then assign it)
+    *((int32_t *)bufferPtr) = (int32_t)blockType;
+
+    // update the StaticBuffer::blockAllocMap entry corresponding to the
+    // object's block number to `blockType`.
+    StaticBuffer::blockAllocMap[blockNum] = blockType;
+
+    // update dirty bit by calling StaticBuffer::setDirtyBit()
+    ret = StaticBuffer::setDirtyBit(blockNum);
+    if(ret != SUCCESS){
+        return ret;
+    }
+
+    return SUCCESS;
+}
