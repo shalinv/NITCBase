@@ -5,12 +5,31 @@
 
 // the declarations for these functions can be found in "BlockBuffer.h"
 
+BlockBuffer::BlockBuffer(char blockType){
+    int inBlocktype;
+    if(blockType == 'R'){
+        inBlocktype = REC;
+    }
+    else if(blockType == 'I'){
+        inBlocktype = IND_INTERNAL;
+    }
+    else{
+        inBlocktype = IND_LEAF;
+    }
+    
+    int ret = this->getFreeBlock(inBlocktype);;
+    this->blockNum = ret;
+}
+
 BlockBuffer::BlockBuffer(int blockNum) {
   this->blockNum = blockNum;
 }
 
 // calls the parent class constructor
 RecBuffer::RecBuffer(int blockNum) : BlockBuffer::BlockBuffer(blockNum) {}
+
+RecBuffer::RecBuffer() : BlockBuffer('R'){}
+// call parent non-default constructor with 'R' denoting record block.
 
 // load the block header into the argument pointer
 int BlockBuffer::getHeader(struct HeadInfo *head) {
@@ -254,4 +273,54 @@ int BlockBuffer::setBlockType(int blockType){
     }
 
     return SUCCESS;
+}
+
+int BlockBuffer::getFreeBlock(int blockType){
+
+    // iterate through the StaticBuffer::blockAllocMap and find the block number
+    // of a free block in the disk.
+    // if no block is free, return E_DISKFULL.
+    int freeBlock = -1;
+    for(int i=0; i<DISK_BLOCKS; i++){
+      if(StaticBuffer::blockAllocMap[i] == FREE){
+        freeBlock = i;
+      }
+    }
+    if(freeBlock == -1){
+      return E_DISKFULL;
+    }
+
+    // set the object's blockNum to the block number of the free block.
+    this->blockNum = freeBlock;
+
+    // find a free buffer using StaticBuffer::getFreeBuffer() .
+    int ret = StaticBuffer::getFreeBuffer(freeBlock);
+    if(ret != SUCCESS){
+      return ret;
+    }
+
+    // initialize the header of the block passing a struct HeadInfo with values
+    // pblock: -1, lblock: -1, rblock: -1, numEntries: 0, numAttrs: 0, numSlots: 0
+    // to the setHeader() function.
+    HeadInfo head;
+    head.pblock = -1;
+    head.lblock = -1;
+    head.rblock = -1;
+    head.numEntries = 0;
+    head.numAttrs = 0;
+    head.numSlots = 0; 
+
+    ret = setHeader(&head);
+    if(ret != SUCCESS){
+        return ret;
+    }
+
+    // update the block type of the block to the input block type using setBlockType().
+    ret = setBlockType(blockType);
+    if(ret != SUCCESS){
+        return ret;
+    }
+
+    // return block number of the free block.
+    return freeBlock;
 }
