@@ -239,7 +239,7 @@ int BlockBuffer::setHeader(struct HeadInfo *head){
 
     // update dirty bit by calling StaticBuffer::setDirtyBit()
     // if setDirtyBit() failed, return the error code
-    ret = StaticBuffer::setDirtyBit(blockNum);
+    ret = StaticBuffer::setDirtyBit(this->blockNum);
     if(ret != SUCCESS){
         return ret;
     }
@@ -264,10 +264,10 @@ int BlockBuffer::setBlockType(int blockType){
 
     // update the StaticBuffer::blockAllocMap entry corresponding to the
     // object's block number to `blockType`.
-    StaticBuffer::blockAllocMap[blockNum] = blockType;
+    StaticBuffer::blockAllocMap[this->blockNum] = (unsigned char)blockType;
 
     // update dirty bit by calling StaticBuffer::setDirtyBit()
-    ret = StaticBuffer::setDirtyBit(blockNum);
+    ret = StaticBuffer::setDirtyBit(this->blockNum);
     if(ret != SUCCESS){
         return ret;
     }
