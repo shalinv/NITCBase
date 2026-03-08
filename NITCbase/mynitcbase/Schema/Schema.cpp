@@ -75,3 +75,101 @@ int Schema::renameAttr(char *relName, char *oldAttrName, char *newAttrName) {
     // return the value returned by the above renameAttribute() call
     return ret;
 }
+
+int createRel(char relName[],int nAttrs, char attrs[][ATTR_SIZE],int attrtype[]){
+
+    // declare variable relNameAsAttribute of type Attribute
+    // copy the relName into relNameAsAttribute.sVal
+    Attribute relNameAsAttribute;
+    strcpy(relNameAsAttribute.sVal, relName);
+
+    // declare a variable targetRelId of type RecId
+    RecId targertRelId;
+
+    // Reset the searchIndex using RelCacheTable::resetSearhIndex()
+    RelCacheTable::resetSearchIndex(RELCAT_RELID);
+
+    // Search the relation catalog (relId given by the constant RELCAT_RELID)
+    // for attribute value attribute "RelName" = relNameAsAttribute using
+    // BlockAccess::linearSearch() with OP = EQ
+    targertRelId = BlockAccess::linearSearch(RELCAT_RELID, (char *)"RelName", relNameAsAttribute, EQ);
+
+    if(targertRelId.block != -1 || targertRelId.slot != -1){
+      return E_RELEXIST;
+    }
+
+    // compare every pair of attributes of attrNames[] array
+    // if any attribute names have same string value,
+    //     return E_DUPLICATEATTR (i.e 2 attributes have same value)
+    for(int i=0; i<nAttrs; i++){
+      for(int j=i+1; j<nAttrs; j++){
+        if(strcmp(attrs[i], attrs[j]) == 0){
+          return E_DUPLICATEATTR;
+        }
+      }
+    }
+
+    /* declare relCatRecord of type Attribute which will be used to store the
+       record corresponding to the new relation which will be inserted
+       into relation catalog */
+    Attribute relCatRecord[RELCAT_NO_ATTRS];
+    // fill relCatRecord fields as given below
+    strcpy(relCatRecord[RELCAT_REL_NAME_INDEX].sVal, relName);
+    relCatRecord[RELCAT_NO_ATTRIBUTES_INDEX].nVal = nAttrs;
+    relCatRecord[RELCAT_NO_RECORDS_INDEX].nVal = 0;
+    relCatRecord[RELCAT_FIRST_BLOCK_INDEX].nVal = -1;
+    relCatRecord[RELCAT_LAST_BLOCK_INDEX].nVal = -1;
+    relCatRecord[RELCAT_NO_SLOTS_PER_BLOCK_INDEX].nVal = floor((2016/(16 * nAttrs + 1)));
+
+    int retVal = BlockAccess::insert(RELCAT_RELID, relCatRecord);
+    // if BlockAccess::insert fails return retVal
+    if(retVal != SUCCESS){
+      return retVal;
+    }
+
+    for(int i=0; i<nAttrs ; i++)
+    {
+        /* declare Attribute attrCatRecord[6] to store the attribute catalog
+           record corresponding to i'th attribute of the argument passed*/
+        Attribute attrCatRecord[6];
+
+        strcpy(attrCatRecord[ATTRCAT_REL_NAME_INDEX].sVal, relName);
+        strcpy(attrCatRecord[ATTRCAT_ATTR_NAME_INDEX].sVal, attrs[i]);
+        attrCatRecord[ATTRCAT_ATTR_TYPE_INDEX].nVal = attrtype[i];
+        attrCatRecord[ATTRCAT_PRIMARY_FLAG_INDEX].nVal = -1;
+        attrCatRecord[ATTRCAT_ROOT_BLOCK_INDEX].nVal = -1;
+        attrCatRecord[ATTRCAT_OFFSET_INDEX].nVal = i;
+
+        retVal = BlockAccess::insert(ATTRCAT_RELID, attrCatRecord);
+        if(retVal != SUCCESS){
+          Schema::deleteRel(relName);
+          return E_DISKFULL;
+        }
+    }
+
+    return SUCCESS;
+}
+
+int Schema::deleteRel(char *relName) {
+    if(strcpy(relName, RELCAT_RELNAME) == 0 || strcpy(relName, ATTRCAT_RELNAME) == 0){
+      return E_NOTPERMITTED;
+    }
+
+    // get the rel-id using appropriate method of OpenRelTable class by
+    // passing relation name as argument
+    int relId = OpenRelTable::getRelId(relName);
+    // if relation is opened in open relation table, return E_RELOPEN
+    if(relId > 0 && relId < MAX_OPEN)
+      return E_RELNOTOPEN;
+
+    // Call BlockAccess::deleteRelation() with appropriate argument.
+    int retVal = BlockAccess::deleteRelation(relName);
+    return retVal;
+
+    /* the only that should be returned from deleteRelation() is E_RELNOTEXIST.
+       The deleteRelation call may return E_OUTOFBOUND from the call to
+       loadBlockAndGetBufferPtr, but if your implementation so far has been
+       correct, it should not reach that point. That error could only occur
+       if the BlockBuffer was initialized with an invalid block number.
+    */
+}
