@@ -125,7 +125,7 @@ int Algebra::insert(char relName[ATTR_SIZE], int nAttrs, char record[][ATTR_SIZE
     if(!strcmp(relName, "RELATIONCAT") || !strcmp(relName, "ATTRIBUTECAT")){
       return E_NOTPERMITTED;
     }
-    
+
     // get the relation's rel-id using OpenRelTable::getRelId() method
     int relId = OpenRelTable::getRelId(relName);
 
@@ -147,30 +147,34 @@ int Algebra::insert(char relName[ATTR_SIZE], int nAttrs, char record[][ATTR_SIZE
 
     // let recordValues[numberOfAttributes] be an array of type union Attribute
     union Attribute recordValues[nAttrs];
+
     /*
         Converting 2D char array of record values to Attribute array recordValues
      */
+
     // iterate through 0 to nAttrs-1: (let i be the iterator)
-    for(int i=0; i < nAttrs; i++)
+    for(int i = 0; i < nAttrs; i++)
     {
         // get the attr-cat entry for the i'th attribute from the attr-cache
         // (use AttrCacheTable::getAttrCatEntry())
         AttrCatEntry attrCatEntry;
         AttrCacheTable::getAttrCatEntry(relId, i, &attrCatEntry);
 
+        // let type = attrCatEntry.attrType;
         int type = attrCatEntry.attrType;
 
         if (type == NUMBER)
         {
             // if the char array record[i] can be converted to a number
             // (check this using isNumber() function)
-            if (isNumber(record[i]))
-            {// return E_NOTPERMITTED;
+              if (isNumber(record[i]))
+            {
                 /* convert the char array to numeral and store it
                    at recordValues[i].nVal using atof() */
                 recordValues[i].nVal = atof(record[i]);
             }
-            else
+            // else
+            else 
             {
                 return E_ATTRTYPEMISMATCH;
             }
