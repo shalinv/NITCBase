@@ -76,7 +76,7 @@ int Schema::renameAttr(char *relName, char *oldAttrName, char *newAttrName) {
     return ret;
 }
 
-int createRel(char relName[],int nAttrs, char attrs[][ATTR_SIZE],int attrtype[]){
+int Schema::createRel(char relName[],int nAttrs, char attrs[][ATTR_SIZE],int attrtype[]){
 
     // declare variable relNameAsAttribute of type Attribute
     // copy the relName into relNameAsAttribute.sVal
@@ -94,7 +94,7 @@ int createRel(char relName[],int nAttrs, char attrs[][ATTR_SIZE],int attrtype[])
     // BlockAccess::linearSearch() with OP = EQ
     targertRelId = BlockAccess::linearSearch(RELCAT_RELID, (char *)"RelName", relNameAsAttribute, EQ);
 
-    if(targertRelId.block != -1 || targertRelId.slot != -1){
+    if(targertRelId.block != -1 && targertRelId.slot != -1){
       return E_RELEXIST;
     }
 
@@ -151,7 +151,7 @@ int createRel(char relName[],int nAttrs, char attrs[][ATTR_SIZE],int attrtype[])
 }
 
 int Schema::deleteRel(char *relName) {
-    if(strcpy(relName, RELCAT_RELNAME) == 0 || strcpy(relName, ATTRCAT_RELNAME) == 0){
+    if(strcmp(relName, RELCAT_RELNAME) == 0 || strcmp(relName, ATTRCAT_RELNAME) == 0){
       return E_NOTPERMITTED;
     }
 
@@ -159,8 +159,8 @@ int Schema::deleteRel(char *relName) {
     // passing relation name as argument
     int relId = OpenRelTable::getRelId(relName);
     // if relation is opened in open relation table, return E_RELOPEN
-    if(relId > 0 && relId < MAX_OPEN)
-      return E_RELNOTOPEN;
+    if(relId != E_RELNOTOPEN)
+      return E_RELOPEN;
 
     // Call BlockAccess::deleteRelation() with appropriate argument.
     int retVal = BlockAccess::deleteRelation(relName);

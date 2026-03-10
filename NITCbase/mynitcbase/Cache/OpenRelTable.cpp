@@ -134,7 +134,7 @@ OpenRelTable::~OpenRelTable() {
 
     for(int i=2; i < MAX_OPEN; i++)
     {
-      if(tableMetaInfo[i].free)
+      if(!tableMetaInfo[i].free)
       {
         OpenRelTable::closeRel(i);
       }
@@ -168,7 +168,7 @@ OpenRelTable::~OpenRelTable() {
       RelCacheTable::getRelCatEntry(RELCAT_RELID, &relCatBuffer);
       Attribute relCatRecord[RELCAT_NO_ATTRS];
       RelCacheTable::relCatEntryToRecord(&relCatBuffer, relCatRecord);
-      RecId recId = RelCacheTable::relCache[ATTRCAT_RELID]->recId;
+      RecId recId = RelCacheTable::relCache[RELCAT_RELID]->recId;
       // declaring an object of RecBuffer class to write back to the buffer
       RecBuffer relCatBlock(recId.block);
 
@@ -222,8 +222,8 @@ int OpenRelTable::getRelId(char relName[ATTR_SIZE]) {
   /* traverse through the tableMetaInfo array,
     find the entry in the Open Relation Table corresponding to relName.*/
   for(int i=0; i < MAX_OPEN ; i++){
-    if(!strcmp(tableMetaInfo[i].relName , relName)){
-      return i;
+    if(!tableMetaInfo[i].free && strcmp(tableMetaInfo[i].relName , relName) == 0){
+        return i;
     }
   }
   return E_RELNOTOPEN;
@@ -281,7 +281,7 @@ int OpenRelTable::openRel(char relName[ATTR_SIZE]) {
   relCacheEntry->recId = relcatRecId;
   relCacheEntry->searchIndex.block = -1;
   relCacheEntry->searchIndex.slot = -1;
-  *(RelCacheTable::relCache[relId] = relCacheEntry);
+  RelCacheTable::relCache[relId] = relCacheEntry;
 
   /****** Setting up Attribute Cache entry for the relation ******/
 
@@ -391,6 +391,7 @@ int OpenRelTable::closeRel(int relId) {
   
 
   tableMetaInfo[relId].free = true;
+  tableMetaInfo[relId].relName[0] = '\0';
   RelCacheTable::relCache[relId] = nullptr;
    AttrCacheTable::attrCache[relId] = nullptr;
   return SUCCESS;
