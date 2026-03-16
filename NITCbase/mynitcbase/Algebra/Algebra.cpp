@@ -193,3 +193,75 @@ int Algebra::insert(char relName[ATTR_SIZE], int nAttrs, char record[][ATTR_SIZE
     return retVal;
 }
 
+int Algebra::project(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE]) {
+
+    int srcRelId = OpenRelTable::getRelId(srcRel);
+
+    if(srcRelId < 0 || srcRelId > MAX_OPEN){
+      return E_RELNOTOPEN;
+    }
+
+    // get RelCatEntry of srcRel using RelCacheTable::getRelCatEntry()
+    RelCatEntry srcRelCatBuf;
+    RelCacheTable::getRelCatEntry(srcRelId, &srcRelCatBuf);
+
+    // get the no. of attributes present in relation from the fetched RelCatEntry.
+    int numAttrs = srcRelCatBuf.numAttrs;
+
+    // attrNames and attrTypes will be used to store the attribute names
+    // and types of the source relation respectively
+    char attrNames[numAttrs][ATTR_SIZE];
+    int attrTypes[numAttrs];
+
+    for(int i=0; i< numAttrs; i++){
+      AttrCatEntry AttrCatBuf;
+      AttrCacheTable::getAttrCatEntry(srcRelId, i, &AttrCatBuf);
+      attrTypes[i] = AttrCatBuf.attrType;
+      strcpy(attrNames[i], AttrCatBuf.attrName);
+    }
+
+
+    /*** Creating and opening the target relation ***/
+
+    // Create a relation for target relation by calling Schema::createRel()
+    int ret = Schema::createRel(targetRel, numAttrs, attrNames, attrTypes);
+
+    // if the createRel returns an error code, then return that value.
+    if(ret != SUCCESS){
+      return ret;
+    }
+
+    // Open the newly created target relation by calling OpenRelTable::openRel()
+    // and get the target relid
+
+    // If opening fails, delete the target relation by calling Schema::deleteRel() of
+    // return the error value returned from openRel().
+
+    int RelId = OpenRelTable::openRel(targetRel);
+    if(RelId < 0 || RelId > MAX_OPEN){
+      Schema::deleteRel(targetRel);
+      return RelId;
+    }
+
+    /*** Inserting projected records into the target relation ***/
+
+    // Take care to reset the searchIndex before calling the project function
+    // using RelCacheTable::resetSearchIndex()
+    RelCacheTable::resetSearchIndex(srcRelId);
+    Attribute record[numAttrs];
+
+    while (BlockAccess::project(srcRelId, record) == SUCCESS)
+    {
+        // record will contain the next record
+        ret = BlockAccess::insert(RelId, record);
+        if (ret != SUCCESS) {
+            Schema::closeRel(targetRel);
+            Schema::deleteRel(targetRel);
+            return ret;
+        }
+    }
+
+    // Close the targetRel by calling Schema::closeRel()
+    Schema::closeRel(targetRel);
+    return SUCCESS;
+}
