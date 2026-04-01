@@ -462,7 +462,7 @@ int IndInternal::getEntry(void *ptr, int indexNum) {
 
 int IndLeaf::getEntry(void *ptr, int indexNum) {
 
-    if(indexNum < 0 || indexNum >= MAX_KEYS_INTERNAL){
+  if(indexNum < 0 || indexNum >= MAX_KEYS_LEAF){
       return E_OUTOFBOUND;
     }
 

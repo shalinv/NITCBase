@@ -1,0 +1,6 @@
+# Ignore input files
+NITCbase/Files/Input_Files/*
+
+# Ignore generated files
+NITCbase/Files/Batch_Execution_Files/*
+NITCbase/Files/Output_Files/*
