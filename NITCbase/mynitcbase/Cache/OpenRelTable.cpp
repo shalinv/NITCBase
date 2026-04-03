@@ -384,6 +384,12 @@ int OpenRelTable::closeRel(int relId) {
   AttrCacheEntry *entry,*temp;
   entry=AttrCacheTable::attrCache[relId];
   while(entry!=nullptr){
+    if(entry->dirty){
+      Attribute attrCatRecord[ATTRCAT_NO_ATTRS];
+      AttrCacheTable::attrCatEntryToRecord(&entry->attrCatEntry, attrCatRecord);
+      RecBuffer attrCatBlockBuffer(entry->recId.block);
+      attrCatBlockBuffer.setRecord(attrCatRecord, entry->recId.slot);
+    }
     temp=entry;
     entry=entry->next;
     free(temp);
