@@ -89,7 +89,7 @@ RecId BlockAccess::linearSearch(int relId, char attrName[ATTR_SIZE], union Attri
        int offset = attrCatEntry.offset;
         /* use the attribute offset to get the value of the attribute from
            current record */
-
+        LScount++;
         int cmpVal = compareAttrs(record[offset], attrVal, attrCatEntry.attrType);  // will store the difference between the attributes
         // set cmpVal using compareAttrs()
 

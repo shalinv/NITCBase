@@ -118,9 +118,9 @@ int Algebra::select(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE], char attr
 
     // read every record that satisfies the condition by repeatedly calling
     // BlockAccess::search() until there are no more records to be read
-
+    LScount =0;
+    BTScount =0;
     while (BlockAccess::search(srcRelId, record, attr, attrVal, op) == SUCCESS) {
-
         ret = BlockAccess::insert(tarRelId, record);
 
         if(ret != SUCCESS){
@@ -129,6 +129,9 @@ int Algebra::select(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE], char attr
           return ret;
         }
     }
+
+    printf("Linear search comparisons: %lld\n", LScount);
+    printf("Bplus search comparisons: %lld\n", BTScount);
 
     Schema::closeRel(targetRel);
 

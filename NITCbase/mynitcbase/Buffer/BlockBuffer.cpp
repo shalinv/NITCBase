@@ -5,6 +5,9 @@
 
 // the declarations for these functions can be found in "BlockBuffer.h"
 
+long long LScount =0;
+long long BTScount=0;
+
 BlockBuffer::BlockBuffer(int blockNum) {
   this->blockNum = blockNum;
 }

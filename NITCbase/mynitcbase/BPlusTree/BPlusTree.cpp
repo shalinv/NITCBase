@@ -128,6 +128,7 @@ RecId BPlusTree::bPlusSearch(int relId, char attrName[ATTR_SIZE], Attribute attr
             bool found = false;
             while (index < intHead.numEntries) {
                 ret = internalBlk.getEntry(&intEntry, index);
+                BTScount++;
                 int cmpVal = compareAttrs(intEntry.attrVal, attrVal, NUMBER);
                 if ((op == EQ and cmpVal == 0) or (op == GE and cmpVal >= 0) or
                     (op == GT and cmpVal > 0)) {
@@ -172,6 +173,7 @@ RecId BPlusTree::bPlusSearch(int relId, char attrName[ATTR_SIZE], Attribute attr
             // using IndLeaf::getEntry().
             leafBlk.getEntry(&leafEntry, index);
 
+            BTScount++;
             int cmpVal = compareAttrs(leafEntry.attrVal, attrVal, NUMBER);
 
             if (

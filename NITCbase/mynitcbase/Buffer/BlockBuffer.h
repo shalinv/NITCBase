@@ -25,6 +25,9 @@ typedef union Attribute {
 
 int compareAttrs(Attribute attr1, Attribute attr2, int attrType);
 
+extern long long LScount;
+extern long long BTScount;
+
 struct InternalEntry {
   int32_t lChild;
   union Attribute attrVal;
