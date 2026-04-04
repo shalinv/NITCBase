@@ -43,12 +43,14 @@ int BlockBuffer::getHeader(struct HeadInfo *head) {
   }
 
   // populate the numEntries, numAttrs and numSlots fields in *head
-  memcpy(&head->numSlots, bufferPtr + 24, 4);
+  memcpy(&head->blockType, bufferPtr + 0, 4);
+  memcpy(&head->pblock, bufferPtr + 4, 4);
+  memcpy(&head->lblock, bufferPtr + 8, 4);
+  memcpy(&head->rblock, bufferPtr + 12, 4);
   memcpy(&head->numEntries, bufferPtr + 16, 4);
   memcpy(&head->numAttrs, bufferPtr + 20, 4);
-  memcpy(&head->rblock, bufferPtr + 12, 4);
-  memcpy(&head->lblock, bufferPtr + 8, 4);
-
+  memcpy(&head->numSlots, bufferPtr + 24, 4);
+  memcpy(&head->reserved, bufferPtr + 28, 4);
   return SUCCESS;
 }
 
@@ -65,6 +67,9 @@ int BlockBuffer::loadBlockAndGetBufferPtr(unsigned char ** buffPtr) {
     /* check whether the block is already present in the buffer
        using StaticBuffer.getBufferNum() */
     int bufferNum = StaticBuffer::getBufferNum(this->blockNum);
+
+    if(bufferNum == E_OUTOFBOUND)
+    return E_OUTOFBOUND;
 
     // if present (!=E_BLOCKNOTINBUFFER),
         // set the timestamp of the corresponding buffer to 0 and increment the
