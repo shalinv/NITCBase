@@ -134,8 +134,8 @@ RecId BPlusTree::bPlusSearch(int relId, char attrName[ATTR_SIZE], Attribute attr
                 ret = internalBlk.getEntry(&intEntry, index);
                 BTScount++;
                 int cmpVal = compareAttrs(intEntry.attrVal, attrVal, attrType);
-                if ((op == EQ and cmpVal == 0) or (op == GE and cmpVal >= 0) or
-                    (op == GT and cmpVal > 0)) {
+                if ((op == EQ && cmpVal >= 0) || (op == GE && cmpVal >= 0) ||
+                  (op == GT && cmpVal > 0)) {
                 found = true;
                 break;
                 }
