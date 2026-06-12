@@ -1,4 +1,4 @@
-# DBMS Lab: NITCBase
+# NITCBase
 
 This repository contains the work for the DBMS Lab, focusing on the development of **NITCBase**, a Relational Database Management System (RDBMS) implemented in C++ from scratch. The project is designed for educational purposes to demonstrate the core architectural components of a database system.
 
